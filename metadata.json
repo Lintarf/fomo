@@ -1,0 +1,6 @@
+{
+  "name": "FOMO AI TRADING ANALYST",
+  "description": "An AI-powered trading analyst system named FOMO AI. It provides a homepage, dashboard, and specialized tools for analyzing scalp and swing trading charts. The Gemini-powered AI agent offers technical analysis, performance insights, and personalized feedback.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
