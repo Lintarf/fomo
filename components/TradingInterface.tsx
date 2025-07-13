@@ -56,6 +56,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [tradeToShare, setTradeToShare] = useState<TradeAnalysis | null>(null);
+    const [shareDescription, setShareDescription] = useState('');
 
     const timeframeSettings = {
         scalp: { text: "Timeframe: 1m, 3m, 5m, 15m (minute) only", link: "https://www.tradingview.com/symbols/" },
@@ -231,19 +232,17 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
     // Tambahkan handler share
     const handleShareRequest = (trade: TradeAnalysis) => {
       setTradeToShare(trade);
+      setShareDescription('');
       setShareModalOpen(true);
     };
 
     const handleConfirmShare = async () => {
       if (!tradeToShare) return;
-      
       try {
         // First, ensure the trade is saved to the database
         let savedTrade = tradeToShare;
-        
         // Check if this trade is already in the database by looking for it in tradeHistory
         const existingTrade = tradeHistory.find(t => t.id === tradeToShare.id);
-        
         if (!existingTrade) {
           // If not in database, save it first
           if (supabaseService.supabase) {
@@ -256,48 +255,39 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
             onTradeAdded(savedTrade);
           }
         }
-        
-        // Now share to community with the correct analysis_id
-        const shareResult = await shareAnalysisToCommunity(supabaseService.supabase, user.id, savedTrade);
-        
+        // Now share to community with the correct analysis_id and description
+        const shareResult = await shareAnalysisToCommunity(
+          supabaseService.supabase,
+          user.id,
+          savedTrade,
+          undefined,
+          shareDescription
+        );
         // Show success message with modern notification
         const notification = document.createElement('div');
         notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
         notification.textContent = '✅ Analisis berhasil di-share ke komunitas!';
         document.body.appendChild(notification);
-        
-        // Animate in
         setTimeout(() => {
           notification.classList.remove('translate-x-full');
         }, 100);
-        
-        // Animate out and remove
         setTimeout(() => {
           notification.classList.add('translate-x-full');
           setTimeout(() => {
             document.body.removeChild(notification);
           }, 300);
         }, 3000);
-        
-        // Close modal
         setShareModalOpen(false);
         setTradeToShare(null);
-        
       } catch (err: any) {
         console.error('Error sharing to community:', err);
-        
-        // Show error message with modern notification
         const notification = document.createElement('div');
         notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
         notification.textContent = '❌ Gagal share ke komunitas: ' + (err.message || err);
         document.body.appendChild(notification);
-        
-        // Animate in
         setTimeout(() => {
           notification.classList.remove('translate-x-full');
         }, 100);
-        
-        // Animate out and remove
         setTimeout(() => {
           notification.classList.add('translate-x-full');
           setTimeout(() => {
@@ -505,16 +495,42 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
               cancelText="Batal"
               isDestructive
             />
-            <ConfirmationModal
-              isOpen={shareModalOpen}
-              onClose={handleCancelShare}
-              onConfirm={handleConfirmShare}
-              title="Share Analisa ke Komunitas?"
-              message="Analisa ini akan dibagikan ke menu Community dan bisa dilihat user lain."
-              confirmText="Share"
-              cancelText="Batal"
-              isDestructive={false}
-            />
+            {/* Share to Community Modal */}
+            {shareModalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 w-full max-w-md relative">
+                  <button
+                    onClick={handleCancelShare}
+                    className="absolute top-3 right-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  >
+                    ×
+                  </button>
+                  <h2 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-100">Share Analisa ke Komunitas?</h2>
+                  <p className="mb-2 text-slate-600 dark:text-slate-300 text-sm">Analisa ini akan dibagikan ke menu Community dan bisa dilihat user lain.</p>
+                  <textarea
+                    className="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 mb-4"
+                    rows={3}
+                    placeholder="Tuliskan deskripsi ini analisa pair apa"
+                    value={shareDescription}
+                    onChange={e => setShareDescription(e.target.value)}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={handleCancelShare}
+                      className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      onClick={handleConfirmShare}
+                      className="px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700"
+                    >
+                      Share
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
         </div>
     );
 };
