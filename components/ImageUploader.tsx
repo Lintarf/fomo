@@ -4,21 +4,39 @@ import { UploadIcon, SpinnerIcon } from './Icons';
 interface ImageUploaderProps {
   onImageSelect: (file: File) => void;
   isLoading: boolean;
+  isTradingMode?: boolean; // NEW PROP
+  preview?: string | null; // NEW PROP
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, isLoading }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, isLoading, isTradingMode = true, preview }) => {
   const [dragActive, setDragActive] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File terlalu besar. Maksimal 10MB.');
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreview(reader.result as string);
+        try {
+          const result = reader.result as string;
+          onImageSelect(file);
+        } catch (error) {
+          console.error('Error processing image file:', error);
+          alert('Gagal memproses file gambar. Silakan coba file lain.');
+        }
+      };
+      reader.onerror = () => {
+        console.error('Error reading image file');
+        alert('Gagal membaca file gambar. Silakan coba file lain.');
       };
       reader.readAsDataURL(file);
-      onImageSelect(file);
+    } else {
+      alert('File harus berupa gambar (PNG, JPEG, atau WebP).');
     }
   }, [onImageSelect]);
 
@@ -67,11 +85,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, isLoading 
   }, [isLoading, handleFile]);
 
   useEffect(() => {
+    if (!isTradingMode) return;
     document.addEventListener('paste', handlePaste);
     return () => {
       document.removeEventListener('paste', handlePaste);
     };
-  }, [handlePaste]);
+  }, [handlePaste, isTradingMode]);
 
   return (
     <div
@@ -94,15 +113,19 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageSelect, isLoading 
         disabled={isLoading}
       />
       {preview ? (
-        <div className="w-full h-full relative">
-            <img src={preview} alt="Chart preview" className="object-contain w-full h-full rounded-md" />
-            {isLoading && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-lg">
-                <SpinnerIcon className="w-16 h-16 text-violet-600 dark:text-violet-400" />
-                <p className="mt-4 text-lg font-semibold text-slate-800 dark:text-slate-100">Analyzing Chart...</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">This may take a moment.</p>
-              </div>
-            )}
+        <div className="relative w-full h-full flex items-center justify-center">
+          <img
+            src={preview}
+            className={isLoading ? "w-full h-full object-contain blur-sm opacity-70 transition-all" : "w-full h-full object-contain transition-all"}
+            alt="Chart Preview"
+            style={{ maxHeight: 320, maxWidth: '100%' }}
+          />
+          {isLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 dark:bg-slate-900/60 z-10">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mb-2" />
+              <span className="font-semibold text-slate-700 dark:text-slate-200">Analyzing Chart...</span>
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center">

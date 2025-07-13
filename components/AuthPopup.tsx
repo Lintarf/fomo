@@ -5,10 +5,11 @@ import { XCircleIcon, SpinnerIcon } from './Icons';
 
 interface AuthPopupProps {
   supabaseClient: SupabaseClient<Database>;
+  open: boolean;
   onClose: () => void;
 }
 
-const AuthPopup: React.FC<AuthPopupProps> = ({ supabaseClient, onClose }) => {
+const AuthPopup: React.FC<AuthPopupProps> = ({ supabaseClient, open, onClose }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -74,12 +75,12 @@ const AuthPopup: React.FC<AuthPopupProps> = ({ supabaseClient, onClose }) => {
         } else {
           localStorage.removeItem('rememberedEmail');
         }
-        // The onAuthStateChange listener in App.tsx will handle closing the modal
+        // Close popup immediately after successful login
+        onClose();
       } else {
         await signUpUser(supabaseClient, { email, password, nama });
-        // After a successful sign-up (with email confirmation disabled in Supabase),
-        // the user is automatically logged in. The onAuthStateChange listener in App.tsx
-        // will detect the new session and close this popup.
+        // Close popup immediately after successful registration
+        onClose();
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
@@ -95,6 +96,11 @@ const AuthPopup: React.FC<AuthPopupProps> = ({ supabaseClient, onClose }) => {
     setPassword('');
     setNama('');
   };
+
+  // Don't render if not open
+  if (!open) {
+    return null;
+  }
 
   return (
     <div

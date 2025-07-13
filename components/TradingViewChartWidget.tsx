@@ -3,7 +3,7 @@ import React from 'react';
 const TradingViewChartWidget: React.FC = () => {
     return (
         <>
-            <div className="absolute top-1/2 left-1/2 w-[600px] h-[400px] opacity-10 dark:opacity-5 z-0 animate-subtle-float select-none">
+            <div className="absolute top-1/2 left-1/2 w-[300px] h-[200px] sm:w-[450px] sm:h-[300px] lg:w-[600px] lg:h-[400px] opacity-10 dark:opacity-5 z-0 animate-subtle-float select-none">
                 <svg width="100%" height="100%" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">

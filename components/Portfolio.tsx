@@ -1,17 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PortfolioData, TokenUsage, ApiStatus } from '../types';
-import { InfoIcon, AiIcon, SpinnerIcon, TrendingUpIcon } from './Icons';
+import { InfoIcon, AiIcon } from './Icons';
 import { generateFinancialAdvice } from '../services/geminiService';
-import PortfolioPieChart from './PortfolioPieChart';
+import { supabase, getPortfolioData } from '../services/supabaseService';
+import PortfolioAssetManager from './PortfolioAssetManager';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { User } from '@supabase/supabase-js';
 
 interface PortfolioProps {
+    user: User;
     apiKey: string;
     apiStatus: ApiStatus;
     portfolioData: PortfolioData | null;
-    theme: 'light' | 'dark';
     updateTokenUsage: (usage: TokenUsage) => void;
+    userId: string;
 }
 
 const StatCard: React.FC<{ label: string; value: string; subvalue?: string; valueColor?: string }> = ({ label, value, subvalue, valueColor }) => (
@@ -48,11 +51,15 @@ const Disclaimer: React.FC = () => (
   );
 
 
-const Portfolio: React.FC<PortfolioProps> = ({ apiKey, apiStatus, portfolioData, theme, updateTokenUsage }) => {
+const Portfolio: React.FC<PortfolioProps> = ({ apiKey, apiStatus, portfolioData, updateTokenUsage, userId }) => {
     const [aiAdvice, setAiAdvice] = useState('');
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [userQuery, setUserQuery] = useState('');
     const [initialAdviceLoaded, setInitialAdviceLoaded] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [currentPortfolioData, setCurrentPortfolioData] = useState<PortfolioData | null>(portfolioData);
+    const [showAssetManager, setShowAssetManager] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     const formatCurrency = (value: number, decimals = 2) => {
         return new Intl.NumberFormat('en-US', {
@@ -63,32 +70,80 @@ const Portfolio: React.FC<PortfolioProps> = ({ apiKey, apiStatus, portfolioData,
         }).format(value);
     };
 
+    const fetchPortfolioData = useCallback(async () => {
+        if (!userId) {
+            setCurrentPortfolioData(null);
+            setErrorMsg('Anda harus login untuk melihat portfolio.');
+            return;
+        }
+        setIsLoading(true);
+        setErrorMsg(null);
+        try {
+            const data = await getPortfolioData(supabase, userId);
+            setCurrentPortfolioData(data);
+        } catch (error: any) {
+            console.error('Error fetching portfolio data:', error);
+            setCurrentPortfolioData(null);
+            setErrorMsg('Gagal mengambil data portfolio: ' + (error?.message || error));
+        } finally {
+            setIsLoading(false);
+        }
+    }, [userId]);
+
     const fetchAiAdvice = useCallback(async (query: string) => {
         if (apiStatus !== 'valid') {
-            setAiAdvice("AI analysis is unavailable. Please set a valid Gemini API key in the settings.");
+            setAiAdvice("AI analysis tidak tersedia. Silakan set API key yang valid di pengaturan.");
             setIsAiLoading(false);
             return;
         }
 
         setIsAiLoading(true);
         try {
-            const { analysisText, usage } = await generateFinancialAdvice(apiKey, portfolioData, query);
+            const { analysisText, usage } = await generateFinancialAdvice(apiKey, currentPortfolioData, query);
             setAiAdvice(analysisText);
             updateTokenUsage(usage);
         } catch (error) {
+            console.error("Failed to get AI financial advice:", error);
             const errorMessage = error instanceof Error ? error.message : String(error);
-            setAiAdvice(`An error occurred while fetching AI analysis: ${errorMessage}`);
+            let userFriendlyMessage = "Terjadi kesalahan saat mengambil saran keuangan AI.";
+            
+            if (errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('rate limit')) {
+                userFriendlyMessage = "AI advisor tidak tersedia karena quota atau rate limit telah terlampaui. Silakan coba lagi nanti.";
+            } else if (errorMessage.toLowerCase().includes('api key') || errorMessage.toLowerCase().includes('unauthorized')) {
+                userFriendlyMessage = "API key tidak valid. Silakan periksa pengaturan API key Anda.";
+            } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
+                userFriendlyMessage = "Gagal terhubung ke layanan AI. Periksa koneksi internet Anda.";
+            } else if (errorMessage.toLowerCase().includes('invalid response') || errorMessage.toLowerCase().includes('format')) {
+                userFriendlyMessage = "Format respons AI tidak valid. Silakan coba lagi.";
+            } else if (errorMessage.toLowerCase().includes('portfolio data')) {
+                userFriendlyMessage = "Data portfolio tidak tersedia. Silakan muat ulang halaman.";
+            } else if (errorMessage.toLowerCase().includes('timeout')) {
+                userFriendlyMessage = "Request timeout. Silakan coba lagi.";
+            } else {
+                userFriendlyMessage = `Error: ${errorMessage}`;
+            }
+            
+            setAiAdvice(userFriendlyMessage);
         } finally {
             setIsAiLoading(false);
         }
-    }, [apiKey, apiStatus, portfolioData, updateTokenUsage]);
+    }, [apiKey, apiStatus, currentPortfolioData, updateTokenUsage]);
 
     useEffect(() => {
-        if (portfolioData && !initialAdviceLoaded) {
+        if (!userId) {
+            setCurrentPortfolioData(null);
+            setErrorMsg('Anda harus login untuk melihat portfolio.');
+            return;
+        }
+        fetchPortfolioData();
+    }, [fetchPortfolioData, userId]);
+
+    useEffect(() => {
+        if (currentPortfolioData && !initialAdviceLoaded) {
             fetchAiAdvice("Give me a brief overview of my current portfolio allocation and one high-level principle I should keep in mind.");
             setInitialAdviceLoaded(true);
         }
-    }, [portfolioData, fetchAiAdvice, initialAdviceLoaded]);
+    }, [currentPortfolioData, fetchAiAdvice, initialAdviceLoaded]);
 
     const handleQuerySubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -97,26 +152,77 @@ const Portfolio: React.FC<PortfolioProps> = ({ apiKey, apiStatus, portfolioData,
         }
     };
 
-    if (!portfolioData) {
+    if (!userId) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">No Portfolio Data</h2>
-                <p className="mt-2 text-slate-500 dark:text-slate-400">There was an issue loading your portfolio.</p>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Portfolio Login Required</h2>
+                <p className="mt-2 text-slate-500 dark:text-slate-400">Anda harus login untuk mengakses fitur portfolio.</p>
             </div>
         );
     }
 
-    const { totalValue, totalPl, pl24h, pl24hPercent, assets } = portfolioData;
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                <p className="mt-2 text-slate-500 dark:text-slate-400">Loading portfolio data...</p>
+            </div>
+        );
+    }
+
+    if (!currentPortfolioData) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">No Portfolio Data</h2>
+                <p className="mt-2 text-slate-500 dark:text-slate-400">There was an issue loading your portfolio.</p>
+                <button
+                    onClick={fetchPortfolioData}
+                    className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    const { totalValue, totalPl, pl24h, pl24hPercent, assets } = currentPortfolioData;
     const plColor = totalPl >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400';
     const pl24hColor = pl24h >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400';
     const pl24hSign = pl24h >= 0 ? '+' : '';
 
     return (
         <div className="flex-1 flex flex-col gap-6">
-            <header>
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">My Portfolio</h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-1">An overview of your assets and performance.</p>
+            {errorMsg && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <span className="block sm:inline">{errorMsg}</span>
+                    <button onClick={() => setErrorMsg(null)} className="absolute top-1 right-2 text-xl font-bold">×</button>
+                </div>
+            )}
+            <header className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">My Portfolio</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">An overview of your assets and performance.</p>
+                </div>
+                <button
+                    onClick={() => setShowAssetManager(!showAssetManager)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    {showAssetManager ? 'Hide Manager' : 'Manage Assets'}
+                </button>
             </header>
+            
+            {showAssetManager && userId && (
+                <PortfolioAssetManager
+                    userId={userId}
+                    assets={assets}
+                    onAssetAdded={fetchPortfolioData}
+                    onAssetUpdated={fetchPortfolioData}
+                    onAssetDeleted={fetchPortfolioData}
+                />
+            )}
             
             <Disclaimer />
 
@@ -169,9 +275,9 @@ const Portfolio: React.FC<PortfolioProps> = ({ apiKey, apiStatus, portfolioData,
                                         </td>
                                         <td className="px-4 py-4 text-right font-mono text-sm text-slate-600 dark:text-slate-300">{formatCurrency(asset.avgBuyPrice, 2)}</td>
                                         <td className="px-4 py-4 text-right">
-                                            <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{formatCurrency(asset.value)}</p>
-                                            <p className={`text-xs font-semibold ${asset.totalPl >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                                {asset.totalPl >= 0 ? '+' : ''}{formatCurrency(asset.totalPl)}
+                                            <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{formatCurrency(asset.value ?? 0)}</p>
+                                            <p className={`text-xs font-semibold ${(asset.totalPl ?? 0) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                {(asset.totalPl ?? 0) >= 0 ? '+' : ''}{formatCurrency(asset.totalPl ?? 0)}
                                             </p>
                                         </td>
                                     </tr>
@@ -181,46 +287,39 @@ const Portfolio: React.FC<PortfolioProps> = ({ apiKey, apiStatus, portfolioData,
                     </div>
                 </div>
                 <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-                     <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Asset Allocation</h3>
-                     <PortfolioPieChart assets={assets} theme={theme} />
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">AI Financial Advisor</h3>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <AiIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Ask me about my portfolio..."
+                                value={userQuery}
+                                onChange={(e) => setUserQuery(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleQuerySubmit(e);
+                                    }
+                                }}
+                                className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400"
+                            />
+                            <button
+                                onClick={handleQuerySubmit}
+                                className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
+                            >
+                                <AiIcon className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                            </button>
+                        </div>
+                        {isAiLoading ? (
+                            <AiAnalysisSkeleton />
+                        ) : (
+                            <div className="prose dark:prose-invert">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiAdvice}</ReactMarkdown>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </main>
-
-            <section className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="flex-shrink-0 bg-violet-100 dark:bg-violet-900/50 p-2 rounded-full">
-                        <AiIcon className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Your AI Financial Advisor</h3>
-                </div>
-                
-                <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg min-h-[120px]">
-                    {isAiLoading ? <AiAnalysisSkeleton /> : (
-                         <div className="prose prose-sm max-w-none text-slate-600 dark:text-slate-300 dark:prose-headings:text-slate-100 dark:prose-strong:text-slate-100 dark:prose-p:my-1 dark:prose-h3:mt-4 dark:prose-h3:mb-2">
-                             <ReactMarkdown children={aiAdvice} remarkPlugins={[remarkGfm]} />
-                         </div>
-                    )}
-                </div>
-
-                <form onSubmit={handleQuerySubmit} className="mt-4 flex gap-3">
-                    <input
-                        type="text"
-                        value={userQuery}
-                        onChange={(e) => setUserQuery(e.target.value)}
-                        placeholder="Ask a follow-up question about your portfolio..."
-                        className="flex-grow shadow-sm focus:ring-violet-500 focus:border-violet-500 block w-full sm:text-sm border-slate-300 rounded-md bg-slate-50 text-slate-900 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
-                        disabled={isAiLoading}
-                    />
-                    <button
-                        type="submit"
-                        disabled={isAiLoading || !userQuery.trim() || apiStatus !== 'valid'}
-                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-violet-600 hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:bg-slate-400 disabled:cursor-not-allowed"
-                    >
-                        {isAiLoading ? <SpinnerIcon className="w-5 h-5"/> : 'Get Advice'}
-                    </button>
-                </form>
-
-            </section>
         </div>
     );
 };

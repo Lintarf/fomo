@@ -3,7 +3,6 @@ import { TradeAnalysis } from '../types';
 
 interface PerformanceChartProps {
     history: TradeAnalysis[];
-    theme: 'light' | 'dark';
 }
 
 type Timeframe = 'daily' | 'weekly' | 'monthly';
@@ -95,7 +94,7 @@ const TimeframeButton: React.FC<TimeframeButtonProps> = ({buttonTimeframe, activ
     </button>
 );
 
-const PerformanceChart: React.FC<PerformanceChartProps> = ({ history, theme }) => {
+const PerformanceChart: React.FC<PerformanceChartProps> = ({ history }) => {
     const chartContainer = useRef<HTMLCanvasElement>(null);
     const chartInstance = useRef<any>(null);
     const [timeframe, setTimeframe] = useState<Timeframe>('daily');
@@ -112,7 +111,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ history, theme }) =
         
         const { labels, profitData, lossData, pendingData, cumulativePlData } = aggregateData(history, timeframe);
         
-        const isDark = theme === 'dark';
+        const isDark = false; // Removed theme prop, so default to light
         const gridColor = isDark ? 'rgba(71, 85, 105, 0.2)' : 'rgba(203, 213, 225, 0.5)';
         const textColor = isDark ? 'rgba(203, 213, 225, 0.8)' : 'rgba(100, 116, 139, 1)';
         
@@ -294,7 +293,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ history, theme }) =
             }
         };
 
-    }, [history, timeframe, theme]);
+    }, [history, timeframe]);
 
     return (
         <div>

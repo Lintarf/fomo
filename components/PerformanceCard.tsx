@@ -28,14 +28,16 @@ const valueColorClasses = {
 
 const PerformanceCard: React.FC<PerformanceCardProps> = ({ label, value, icon, color }) => {
   return (
-    <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
-      <div className="flex justify-between items-center">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-            {icon}
+    <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between min-h-[120px] sm:min-h-[140px]">
+      <div className="flex justify-between items-start">
+        <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 leading-tight">{label}</p>
+        <div className={`p-1.5 sm:p-2 rounded-lg ${colorClasses[color]} flex-shrink-0`}>
+            <div className="w-4 h-4 sm:w-5 sm:h-5">
+                {icon}
+            </div>
         </div>
       </div>
-      <p className={`text-4xl font-bold mt-4 ${valueColorClasses[color]}`}>{value}</p>
+      <p className={`text-2xl sm:text-3xl lg:text-4xl font-bold mt-3 sm:mt-4 ${valueColorClasses[color]} leading-tight`}>{value}</p>
     </div>
   );
 };

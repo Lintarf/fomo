@@ -1,128 +1,156 @@
-import React from 'react';
-import { HomeIcon, ClockIcon, CalendarIcon, DashboardIcon, SettingsIcon, SunIcon, PositionTraderIcon, EconomicCalendarIcon, PortfolioIcon } from './Icons';
-import { AppMode, ApiStatus } from '../types';
-import ThemeToggle from './ThemeToggle';
-import ApiStatusIndicator from './ApiStatus';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+    HomeIcon, 
+    DashboardIcon, 
+    PortfolioIcon, 
+    SettingsIcon, 
+    CommunityIcon,
+    EconomicCalendarIcon,
+    AiIcon
+} from './Icons';
 
 interface SidebarProps {
-  activeMode: AppMode;
-  onModeChange: (mode: AppMode) => void;
-  theme: 'light' | 'dark';
-  setTheme: (theme: 'light' | 'dark') => void;
-  apiStatus: ApiStatus;
-  sessionTokens: number;
-  totalTokens: number;
+    user: any;
+    sidebarOpen: boolean;
+    setSidebarOpen: (open: boolean) => void;
 }
 
-const NavItem: React.FC<{
-  mode: AppMode;
-  activeMode: AppMode;
-  onClick: (mode: AppMode) => void;
-  icon: React.ReactNode;
-  label: string;
-}> = ({ mode, activeMode, onClick, icon, label }) => (
-  <li>
-    <button
-      onClick={() => onClick(mode)}
-      className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-        activeMode === mode
-          ? 'bg-violet-50 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300'
-          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100'
-      }`}
-    >
-      {icon}
-      <span className="ml-3">{label}</span>
-    </button>
-  </li>
-);
+const Sidebar: React.FC<SidebarProps> = ({ user, sidebarOpen, setSidebarOpen }) => {
+    const location = useLocation();
 
-const Sidebar: React.FC<SidebarProps> = ({ activeMode, onModeChange, theme, setTheme, apiStatus, sessionTokens, totalTokens }) => {
-  return (
-    <aside className="w-full lg:w-64 bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex-shrink-0 flex flex-col">
-      <div className="mb-6 px-2">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">FOMO AI</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Trading Analyst</p>
-      </div>
-      <nav className="flex-1">
-        <ul className="space-y-2">
-            <NavItem
-                mode="home"
-                activeMode={activeMode}
-                onClick={onModeChange}
-                icon={<HomeIcon className="h-5 w-5" />}
-                label="Home"
+    const navigation = [
+        { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
+        { name: 'Trading Analysis', href: '/trading', icon: AiIcon },
+        { name: 'Portfolio', href: '/portfolio', icon: PortfolioIcon },
+        { name: 'Community', href: '/community', icon: CommunityIcon },
+        { name: 'Economic Calendar', href: '/economic-calendar', icon: EconomicCalendarIcon },
+        { name: 'Settings', href: '/settings', icon: SettingsIcon },
+    ];
+
+    const isActive = (href: string) => {
+        return location.pathname === href;
+    };
+
+    return (
+        <>
+            {/* Sidebar mobile overlay */}
+            <div
+                className={`fixed inset-0 z-40 bg-black bg-opacity-40 transition-opacity duration-300 ${sidebarOpen ? 'block' : 'hidden'}`}
+                onClick={() => setSidebarOpen(false)}
             />
-            <NavItem
-                mode="dashboard"
-                activeMode={activeMode}
-                onClick={onModeChange}
-                icon={<DashboardIcon className="h-5 w-5" />}
-                label="Dashboard"
-            />
-            <NavItem
-                mode="portfolio"
-                activeMode={activeMode}
-                onClick={onModeChange}
-                icon={<PortfolioIcon className="h-5 w-5" />}
-                label="Portfolio"
-            />
-            <NavItem
-                mode="economic-calendar"
-                activeMode={activeMode}
-                onClick={onModeChange}
-                icon={<EconomicCalendarIcon className="h-5 w-5" />}
-                label="Economic Calendar"
-            />
-            <div className="py-2">
-                <div className="border-t border-slate-200 dark:border-slate-700"></div>
+            {/* Sidebar mobile */}
+            <div
+                className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden`}
+            >
+                <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200 dark:border-slate-700">
+                    <Link to="/" className="flex items-center" onClick={() => setSidebarOpen(false)}>
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600 text-white font-bold text-lg">F</div>
+                        <span className="ml-2 text-xl font-bold text-slate-800 dark:text-slate-100">FOMO AI</span>
+                    </Link>
+                    <button onClick={() => setSidebarOpen(false)} className="text-slate-500 dark:text-slate-300 hover:text-violet-600 p-2 ml-2">
+                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <nav className="mt-8 flex-1 px-2 space-y-1">
+                    {navigation.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <Link
+                                key={item.name}
+                                to={item.href}
+                                onClick={() => setSidebarOpen(false)}
+                                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                                    isActive(item.href)
+                                        ? 'bg-violet-100 text-violet-900 dark:bg-violet-900/50 dark:text-violet-100'
+                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+                                }`}
+                            >
+                                <Icon
+                                    className={`mr-3 flex-shrink-0 h-6 w-6 ${
+                                        isActive(item.href)
+                                            ? 'text-violet-500 dark:text-violet-400'
+                                            : 'text-slate-400 group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-400'
+                                    }`}
+                                />
+                                {item.name}
+                            </Link>
+                        );
+                    })}
+                </nav>
+                {user && (
+                    <div className="flex-shrink-0 flex border-t border-slate-200 dark:border-slate-700 p-4">
+                        <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-violet-600 text-white flex items-center justify-center text-sm font-medium">
+                                    {user.email?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{user.email}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Trader</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
-            <div className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Trading Modes</div>
-            <NavItem
-                mode="scalp"
-                activeMode={activeMode}
-                onClick={onModeChange}
-                icon={<ClockIcon className="h-5 w-5" />}
-                label="Scalp Trading"
-            />
-            <NavItem
-                mode="day"
-                activeMode={activeMode}
-                onClick={onModeChange}
-                icon={<SunIcon className="h-5 w-5" />}
-                label="Day Trading"
-            />
-            <NavItem
-                mode="swing"
-                activeMode={activeMode}
-                onClick={onModeChange}
-                icon={<CalendarIcon className="h-5 w-5" />}
-                label="Swing Trading"
-            />
-            <NavItem
-                mode="position"
-                activeMode={activeMode}
-                onClick={onModeChange}
-                icon={<PositionTraderIcon className="h-5 w-5" />}
-                label="Position Trading"
-            />
-            <div className="py-2">
-                <div className="border-t border-slate-200 dark:border-slate-700"></div>
+            {/* Sidebar desktop */}
+            <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:z-50 lg:bg-white lg:border-r lg:border-slate-200 dark:lg:bg-slate-900 dark:lg:border-slate-700">
+                <div className="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
+                    <div className="flex items-center flex-shrink-0 px-4">
+                        <Link to="/" className="flex items-center">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600 text-white font-bold text-lg">F</div>
+                            <span className="ml-2 text-xl font-bold text-slate-800 dark:text-slate-100">FOMO AI</span>
+                        </Link>
+                    </div>
+                    <nav className="mt-8 flex-1 px-2 space-y-1">
+                        {navigation.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <Link
+                                    key={item.name}
+                                    to={item.href}
+                                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                                        isActive(item.href)
+                                            ? 'bg-violet-100 text-violet-900 dark:bg-violet-900/50 dark:text-violet-100'
+                                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+                                    }`}
+                                >
+                                    <Icon
+                                        className={`mr-3 flex-shrink-0 h-6 w-6 ${
+                                            isActive(item.href)
+                                                ? 'text-violet-500 dark:text-violet-400'
+                                                : 'text-slate-400 group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-400'
+                                        }`}
+                                    />
+                                    {item.name}
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                </div>
+                {user && (
+                    <div className="flex-shrink-0 flex border-t border-slate-200 dark:border-slate-700 p-4">
+                        <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-violet-600 text-white flex items-center justify-center text-sm font-medium">
+                                    {user.email?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{user.email}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Trader</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
-            <NavItem
-                mode="settings"
-                activeMode={activeMode}
-                onClick={onModeChange}
-                icon={<SettingsIcon className="h-5 w-5" />}
-                label="Settings"
-            />
-        </ul>
-      </nav>
-      <div className="mt-6 space-y-4">
-        <ApiStatusIndicator apiStatus={apiStatus} sessionTokens={sessionTokens} totalTokens={totalTokens} />
-        <ThemeToggle theme={theme} setTheme={setTheme} />
-      </div>
-    </aside>
-  );
+            {/* Tombol hamburger untuk mobile, letakkan di header/topbar layout utama */}
+            {/* <button onClick={() => setSidebarOpen(true)} className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-white dark:bg-slate-800 rounded-full shadow border border-slate-200 dark:border-slate-700">
+                <svg className="h-6 w-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button> */}
+        </>
+    );
 };
 
 export default Sidebar;
