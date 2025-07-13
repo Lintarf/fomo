@@ -70,7 +70,7 @@ const EconomicCalendar: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex-1 flex flex-col gap-6 p-4 sm:p-6">
+            <div className="flex-1 flex flex-col gap-6 pt-8 md:pt-12 px-4 md:px-8 pb-8 w-full">
                 <header>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Economic Calendar</h1>
                     <p className="text-slate-500 dark:text-slate-400 mt-1">Track important economic events and their market impact.</p>
@@ -83,7 +83,7 @@ const EconomicCalendar: React.FC = () => {
     }
 
     return (
-        <div className="flex-1 flex flex-col gap-6 p-4 sm:p-6">
+        <div className="flex-1 flex flex-col gap-6 pt-8 md:pt-12 px-4 md:px-8 pb-8 w-full">
             <header>
                 <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">Economic Calendar</h1>
                 <p className="text-slate-500 dark:text-slate-400 mt-1">Track important economic events and their market impact.</p>

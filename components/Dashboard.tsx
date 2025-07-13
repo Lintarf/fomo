@@ -249,7 +249,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
     const currentEquity = (initialCapital ?? 0) + netPL;
 
     return (
-        <div className="flex-1 flex flex-col gap-4 sm:gap-6 w-full overflow-x-auto pt-6 sm:pt-10 px-2 sm:px-6 lg:px-12 bg-gray-50 dark:bg-slate-900 min-h-screen">
+        <div className="flex-1 flex flex-col gap-6 pt-8 md:pt-12 px-4 md:px-8 pb-8 w-full bg-gray-50 dark:bg-slate-900 min-h-screen">
             {showProfilePopup && (
                 <TraderProfilePopup
                     profile={traderProfile}
@@ -282,11 +282,11 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
                 
                 {/* Mode Buttons - Responsive */}
                 <div className="flex flex-wrap items-center justify-center gap-2 p-1 rounded-lg">
-                    <ModeButton buttonMode="all" activeMode={mode || 'all'} onClick={setDashboardSource || (() => {})}>All</ModeButton>
-                    <ModeButton buttonMode="scalp" activeMode={mode || 'all'} onClick={setDashboardSource || (() => {})}>Scalp</ModeButton>
-                    <ModeButton buttonMode="day" activeMode={mode || 'all'} onClick={setDashboardSource || (() => {})}>Day</ModeButton>
-                    <ModeButton buttonMode="swing" activeMode={mode || 'all'} onClick={setDashboardSource || (() => {})}>Swing</ModeButton>
-                    <ModeButton buttonMode="position" activeMode={mode || 'all'} onClick={setDashboardSource || (() => {})}>Position</ModeButton>
+                    <ModeButton buttonMode="all" activeMode={mode || 'all'} onClick={setDashboardSource}>All</ModeButton>
+                    <ModeButton buttonMode="scalp" activeMode={mode || 'all'} onClick={setDashboardSource}>Scalp</ModeButton>
+                    <ModeButton buttonMode="day" activeMode={mode || 'all'} onClick={setDashboardSource}>Day</ModeButton>
+                    <ModeButton buttonMode="swing" activeMode={mode || 'all'} onClick={setDashboardSource}>Swing</ModeButton>
+                    <ModeButton buttonMode="position" activeMode={mode || 'all'} onClick={setDashboardSource}>Position</ModeButton>
                 </div>
             </header>
 

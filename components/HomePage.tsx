@@ -26,7 +26,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, user, onLoginClick }) =
     console.log('HomePage rendered, user:', user, 'onLoginClick:', typeof onLoginClick);
     
     return (
-        <div className="flex-1 w-full flex flex-col">
+        <div className="flex-1 w-full flex flex-col pt-8 md:pt-12 px-4 md:px-8 pb-8">
             <main className="flex-1 relative flex flex-col justify-center items-center overflow-hidden min-h-[calc(100vh-4rem)]">
                 <FloatingAssetBubbles />
                 <TradingViewChartWidget />

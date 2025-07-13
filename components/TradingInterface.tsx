@@ -332,7 +332,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = ({
     }, [currentEquity]);
 
     return (
-        <div className="flex-1 flex flex-col gap-6 p-4 sm:p-6">
+        <div className="flex-1 flex flex-col gap-6 pt-8 md:pt-12 px-4 md:px-8 pb-8 w-full">
             <header className="flex items-center gap-4">
                 <button
                     onClick={handleBackToUploader}

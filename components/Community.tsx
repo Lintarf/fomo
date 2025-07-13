@@ -339,14 +339,12 @@ export const Community: React.FC<CommunityProps> = ({ user }) => {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Community</h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Share insights and learn from fellow traders
-              </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 w-full">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Community</h1>
+              <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">Share insights and learn from fellow traders</p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {hasNewData && (
                 <button
                   onClick={handleShowNewData}
@@ -362,17 +360,17 @@ export const Community: React.FC<CommunityProps> = ({ user }) => {
               >
                 {loading ? 'Refreshing...' : 'Refresh'}
               </button>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_analyses}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Analyses</div>
+              <div className="flex flex-row sm:flex-col items-center gap-1">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.total_analyses}</div>
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Analyses</div>
               </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_comments}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Comments</div>
+              <div className="flex flex-row sm:flex-col items-center gap-1">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.total_comments}</div>
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Comments</div>
               </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total_likes}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Likes</div>
+              <div className="flex flex-row sm:flex-col items-center gap-1">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.total_likes}</div>
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Likes</div>
               </div>
             </div>
           </div>

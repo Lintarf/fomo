@@ -191,7 +191,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ apiKey, apiStatus, portfolioData,
     const pl24hSign = pl24h >= 0 ? '+' : '';
 
     return (
-        <div className="flex-1 flex flex-col gap-6">
+        <div className="flex-1 flex flex-col gap-6 pt-8 md:pt-12 px-4 md:px-8 pb-8 w-full">
             {errorMsg && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
                     <span className="block sm:inline">{errorMsg}</span>
@@ -246,8 +246,8 @@ const Portfolio: React.FC<PortfolioProps> = ({ apiKey, apiStatus, portfolioData,
                 />
             </div>
 
-            <main className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                <div className="lg:col-span-3 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+            <main className="grid grid-cols-1 lg:grid-cols-5 gap-8 w-full">
+                <div className="lg:col-span-3 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-x-auto">
                     <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">Your Assets</h3>
                     <div className="overflow-x-auto">
                         <table className="w-full">
